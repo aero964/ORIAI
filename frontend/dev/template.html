@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
+<title>Web Tips</title>
+<script type="text/javascript">
+$(function() {
+
+	// 初期化
+	$(".template-sub").hide();
+
+	$("#master").on("change", function(){
+
+		// マスタ選択時の初期化
+		$(".template-sub").hide();
+		$(".sub option").remove();
+		$("#subLavel").html("");
+
+		// valueを取得
+		var masterValue = $(this).val();
+
+		// valueの値を元に振り分け
+		switch(masterValue){
+
+			// 学校用
+			case "T01":
+				genSchoolSubTemplate();
+			break;
+
+			// 時間帯指定のもの
+			case "T02":
+			case "T03":
+				// 時刻リスト(text/json形式)を取得し，結果をハンドリング
+				$.getJSON("./json/" + masterValue + ".json")
+				.done(function(data, len) {
+				    //console.log("読み込み成功。処理を続行します。");
+				    var len 	= data.contents.length;
+				    genRange(data, len);
+				})
+				.fail(function() {
+				    console.error("エラー\n時刻リストを取得できませんでした。処理を中断します。");
+				    alert("エラー\n時刻リストを取得できませんでした。処理を中断します。");
+				    window.location.reload();
+				    return false;
+				});
+			break;
+
+		}
+	});
+
+	// 時間帯が負の数値になるのを防止 選択不能にする。
+	$(document).on("change", "#sub-r1", function(){
+		$("#sub-r2").val("terminal");
+		$(".r2-disable").prop("disabled", false);
+		var subnum = $(this).val().substr(3, 2);
+		subnum = parseInt(subnum ,10);
+
+		for (  var i = 0;  i <= subnum;  i++  ) {
+
+			$(".r2-disable[key='"+ i +"']").prop("disabled", true);
+		}
+	});
+
+	// 学校用を選択したとき
+	function genSchoolSubTemplate(){
+		var hiruyasumi0 = ["01-0009","01-1029","01-1039","01-1049","01-1059","01-1069","01-2149","01-9999"];
+		var hiruyasumi1 = ["先頭","2限の後","3限の後","4限の後","5限の後","6限の後","最後尾","入れない"];
+		for(var i = 0; i < 8; i++) {
+
+		    var option = $('<option>');
+		    option.val(hiruyasumi0[i]);
+		    option.html(hiruyasumi1[i]);
+
+		    $('#sub').append(option);
+		    $("#subLavel").html("「昼休み」をどこに入れるか選択してください。");
+		    $(".normal").show();
+
+		}
+	}
+
+	//時間帯指定
+	function genRange(data, len){
+
+		$('#sub-r2').append("<option value='terminal'>終端の時間</option>");
+
+		for(var i = 0; i < len; i++) {
+
+			// 開始時間
+		    var r1 = $('<option>');
+		    r1.val(data.contents[i].id + "-S");
+		    r1.html(data.contents[i].val);
+		    $('#sub-r1').append(r1);
+
+		    // 終端時間
+		    var r2 = $('<option>');
+		    r2.val(data.contents[i].id + "-F");
+		    r2.html(data.contents[i].val);
+		    r2.addClass("r2-disable");
+		    $('#sub-r2').append(r2);
+
+		    // 終端時間のoptionタグにkey要素(ID)を追加
+		    var subnum = data.contents[i].id.substr(3, 2);
+		    subnum = parseInt(subnum ,10);
+		    r2.attr("key", subnum);
+		}
+
+		// 終端時間の4時を消す
+		$(".r2-disable[value$='0400-F']").remove();
+
+		// 終端時間に28時を追加
+		$('#sub-r2').append('<option value="50-2800-F" class="r2-disable" key="28">28:00(翌4:00)</option>');
+		$(".range").show();
+	}
+
+	// 未使用
+	function genNormal(data, len){
+		for(var i = 0; i < len; i++) {
+			//alert(data.contents[i].val);
+		}
+	}
+
+});
+</script>
+</head>
+<body>
+	<div class="template-master">
+		テンプレ選んでちょ。<br>
+		<select id="master">
+			<option value=null selected>選択してください...</option>
+			<option value="T01">学校用 (1限,2限,...,昼休み など)</option>
+			<option value="T02">時間帯指定 1時間 (18:00～,19:00～ など)</option>
+			<option value="T03">時間帯指定 30分 (13:30～,14:00～ など)</option>
+			<option value="T04">アバウト (暇なとき,業務終了後 など)</option>
+			<option value="T99">自由に入力</option>
+			<option disabled>---------------------------</option>
+			<option disabled>追加して欲しいテンプレートがあれば</option>
+			<option disabled>お気軽にお申し付けください♪</option>			
+		</select>
+	</div>
+
+	<div class="template-sub normal">
+		<p id="subLavel"></p>
+		<select id="sub" class="sub"></select>
+	</div>
+
+	<div class="template-sub range">
+		<p>リストアップする時間帯を指定してください</p>
+		<select id="sub-r1" class="sub"></select>～
+		<select id="sub-r2" class="sub"></select>
+	</div>
+</body>
+</html>
