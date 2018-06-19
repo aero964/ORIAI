@@ -1,0 +1,229 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Web Tips</title>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
+<script type="text/javascript">
+
+//送信文字列のサニタイジング
+function escape_html (string) {
+  if(typeof string !== 'string') {
+    return string;
+  }
+  return string.replace(/[&'`"<>]/g, function(match) {
+    return {
+      '&': '&amp;',
+      "'": '&#x27;',
+      '`': '&#x60;',
+      '"': '&quot;',
+      '<': '&lt;',
+      '>': '&gt;',
+    }[match]
+  });
+}
+
+
+$(function(){
+
+	//各種初期化。配列の生成など
+	var resultBox = { pageID:null, txID:null, username:null, comment:null,resultSum:null, result:null };
+	var prepareResult = [];
+	$(".mainSwitch").text("×");
+	$(".disabledSwitch").text("-");
+	$(".disabledSwitch").data("level", "9");
+	//初期化完了
+
+	$(".mainSwitch").on("click", function(){
+		switch($(this).data("level")){
+			case 0:
+				// 0 -> ×
+				$(this).data("level", 1);
+				$(this).text("○");
+				$(this).css("background-color", "#3094ff");
+			break;
+
+			case 1:
+				// 1 -> ○
+				$(this).data("level", 2);
+				$(this).text("△");
+				$(this).css("background-color", "#7fbdff");
+			break;
+
+			case 2:
+				// 1 -> ○
+				$(this).data("level", 0);
+				$(this).text("×");
+				$(this).css("background-color", "#c1c1c1");
+			break;
+
+			case 9:
+				// 9 -> OFF
+				return false;
+			break;
+		}
+	});
+
+	//送信ボタンを押したときの処理
+	$(".exec").on("click", function(){
+
+
+		//コメントなどをresultBox配列に流し込む
+		if($(".username").val().length > 0){
+			resultBox["comment"] = escape_html($(".username").val());
+		}else{
+			alert("名前を入力してください。");
+			return false;
+		}
+
+		if($(".comment").val().length > 0){
+			resultBox["comment"] = escape_html($(".comment").val());
+		}
+
+		//ここでスイッチ関連の下準備
+		$(".mainSwitch").each(function(i, o){
+     		//準備用配列にスイッチのデータを流し込む
+     		prepareResult.push({ row: $(o).data("row") , column:  $(o).data("column") , level: $(o).data("level")});
+    	});
+
+    	resultBox["result"] = prepareResult;
+    	resultBox["resultSum"] = prepareResult.length;
+
+
+    	//JSONに変換
+    	var json = JSON.stringify(resultBox);
+		console.log(json);
+
+		//準備用配列をいったんリセット(配列がどんどん追加されていってしまうのを防止)
+		prepareResult = [];
+	});
+
+	// 名前欄入力フォームの文字数制限
+	$(".username").keyup(function(){
+    	var slength = $(this).val().length;
+    	$("#username_limit").text(slength);
+    	if(slength == 0){
+    	  	$("#username_limit").text("0");
+    	} 
+    	if(slength == 20){
+    		$("#username_limit").css("color","red");
+    	} else if(slength >= 15){
+      		$("#username_limit").css("color","orange");
+    	} else {
+      		$("#username_limit").css("color","#333");
+    	}
+  	});
+
+	// コメント欄textareaの文字数制限
+	$(".comment").keyup(function(){
+    	var slength = $(this).val().length;
+    	$("#comment_limit").text(slength);
+    	if(slength == 0){
+    	  	$("#comment_limit").text("0");
+    	} 
+    	if(slength == 240){
+    		$("#comment_limit").css("color","red");
+    	} else if(slength >= 220){
+      		$("#comment_limit").css("color","orange");
+    	} else {
+      		$("#comment_limit").css("color","#333");
+    	}
+  	});
+
+
+});
+</script>
+<style type="text/css">
+<!--
+.mainSwitch{
+	user-select:none;
+	-webkit-user-select:none;
+	-ms-user-select: none;
+	-moz-user-select:none;
+	-khtml-user-select:none;
+	-webkit-user-drag:none;
+	-khtml-user-drag:none;
+
+	border: 1px solid;
+	width: 100px;
+	height: 100px;
+	background-color: #c1c1c1;
+	font-size: 60px;
+	cursor: pointer;
+}
+
+.disabledSwitch{
+	cursor: not-allowed !important;
+	background-color: #666 !important;
+}
+
+td,th:empty{
+	display: none;
+}
+
+-->
+</style>
+
+</head>
+<body>
+
+<div 
+	align="center" 
+	class="mainSwitch disabledSwitch"
+	data-row="1"
+	data-column="1"
+	data-level="0">
+</div>
+
+<div 
+	align="center" 
+	class="mainSwitch"
+	data-row="1"
+	data-column="2"
+	data-level="0">
+</div>
+
+<div 
+	align="center" 
+	class="mainSwitch"
+	data-row="1"
+	data-column="3"
+	data-level="0">
+</div>
+
+<div 
+	align="center" 
+	class="mainSwitch"
+	data-row="1"
+	data-column="4"
+	data-level="0">
+</div>
+
+<div 
+	align="center" 
+	class="mainSwitch"
+	data-row="1"
+	data-column="5"
+	data-level="0">
+</div>
+
+<div 
+	align="center" 
+	class="mainSwitch"
+	data-row="1"
+	data-column="6"
+	data-level="0">
+</div>
+
+<p>名前：20文字まで入力できます。<span id="username_limit"></span></p>
+<input class="username" type="text" value="名無し" maxlength="20">
+
+<p>コメント：240文字まで入力できます。<span id="comment_limit"></span></p>
+<textarea class="comment" maxlength="240"></textarea>
+
+<button class="exec">test</button>
+
+</body>
+</html>
